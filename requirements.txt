@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+streamlit
+langchain
+langchain-community
+sentence-transformers
+chromadb
+datasets
+huggingface_hub
+pandas
+numpy
+pydantic
+python-multipart
+PyPDF2
+tqdm
+openai
