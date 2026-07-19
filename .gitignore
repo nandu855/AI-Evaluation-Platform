@@ -1,19 +1,28 @@
-# Virtual environment
-venv/
-
-# Python cache
+# Python
 __pycache__/
 *.py[cod]
+*.pyo
 
-# VS Code settings
-.vscode/
-
-# Environment variables
+# Virtual Environment
+venv/
 .env
 
-# ChromaDB vector database
-vector_db/
+# Streamlit
+.streamlit/
 
-# OS files
+# ChromaDB
+backend/chroma_db/
+
+# Reports
+*.pdf
+
+# VS Code
+.vscode/
+
+# OS
 .DS_Store
 Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+vector_db/

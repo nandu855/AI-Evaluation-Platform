@@ -70,7 +70,7 @@ if st.button("🚀 Evaluate Answer", use_container_width=True):
             st.error(f"Cannot connect to backend.\n\n{e}")
             st.stop()
 
-    st.success("Evaluation Completed Successfully!")
+    st.success("✅ Evaluation Completed Successfully!")
 
     st.divider()
 
@@ -125,12 +125,86 @@ if st.button("🚀 Evaluate Answer", use_container_width=True):
     st.divider()
 
     with st.expander("📚 Retrieved Context", expanded=False):
-
         st.write(result["retrieved_context"])
+
+    # ==========================================================
+    # AI Judge Agents
+    # ==========================================================
+
+    st.divider()
+    st.subheader("🤖 AI Judge Agents")
+
+    judge = result["judge_results"]
+
+    # -----------------------------
+    # Relevance Judge
+    # -----------------------------
+    with st.expander("🟢 Relevance Judge", expanded=True):
+
+        st.metric(
+            "Score",
+            f"{judge['relevance']['score']:.2f}"
+        )
+
+        st.write("**Reason:**")
+        st.info(judge["relevance"]["reason"])
+
+    # -----------------------------
+    # Accuracy Judge
+    # -----------------------------
+    with st.expander("🔵 Accuracy Judge", expanded=True):
+
+        st.metric(
+            "Score",
+            f"{judge['accuracy']['score']:.2f}"
+        )
+
+        st.write("**Reason:**")
+        st.info(judge["accuracy"]["reason"])
+
+        st.write("**Evidence:**")
+        st.success(judge["accuracy"]["evidence"])
+
+    # -----------------------------
+    # Hallucination Judge
+    # -----------------------------
+    with st.expander("🟠 Hallucination Judge", expanded=True):
+
+        st.metric(
+            "Score",
+            f"{judge['hallucination']['score']:.2f}"
+        )
+
+        st.write("**Reason:**")
+        st.info(judge["hallucination"]["reason"])
+
+        st.write("**Unsupported Claims:**")
+
+        claims = judge["hallucination"]["unsupported_claims"]
+
+        if claims:
+            for claim in claims:
+                st.error(claim)
+        else:
+            st.success("No unsupported claims detected.")
+
+    # ==========================================================
+    # LLM Judge
+    # ==========================================================
 
     st.divider()
 
-    st.subheader("Evaluation Summary")
+    st.subheader("🧠 LLM Judge Explanation")
+
+    st.markdown(judge["llm_reasoning"])
+
+    # ==========================================================
+    # Evaluation Summary
+    # ==========================================================
+
+    st.divider()
+
+    st.subheader("📊 Evaluation Summary")
 
     df = pd.DataFrame(
         {
@@ -156,6 +230,10 @@ if st.button("🚀 Evaluate Answer", use_container_width=True):
         use_container_width=True,
         hide_index=True
     )
+
+    # ==========================================================
+    # Download Report
+    # ==========================================================
 
     st.download_button(
         "⬇ Download JSON Report",
