@@ -2,60 +2,58 @@ import json
 from ollama import chat
 
 
-class HallucinationJudge:
+class CompletenessJudge:
 
     def __init__(self):
         self.model = "llama3.2"
 
     def evaluate(
         self,
-        response: str,
-        retrieved_context: str
+        question,
+        response,
+        reference,
+        retrieved_context
     ):
 
         prompt = f"""
 You are an expert AI Evaluation Judge.
 
-Your task is to determine whether the AI response contains hallucinated
-or unsupported information.
+Your task is to determine whether the AI response completely answers the user's question.
+
+Question:
+{question}
 
 AI Response:
 {response}
+
+Reference Answer:
+{reference}
 
 Retrieved Context:
 {retrieved_context}
 
 Instructions:
 
-1. Compare every important claim in the AI response against the retrieved context.
-
-2. List only claims that are NOT supported by the context.
-
-3. If every claim is supported,
-   unsupported_claims should be an empty list.
-
-Scoring Guidelines
-
-0.90 - 1.00
-No hallucinations detected.
-
-0.75 - 0.89
-Minor unsupported details.
-
-0.50 - 0.74
-Several unsupported claims.
-
-0.00 - 0.49
-Mostly hallucinated.
+1. Identify the important aspects of the question.
+2. Determine which aspects are covered.
+3. Determine which aspects are missing.
+4. Give a completeness score between 0 and 1.
+5. Explain your reasoning.
 
 Return ONLY valid JSON.
 
 Example:
 
 {{
-    "score":0.97,
-    "reason":"The response is fully supported by the retrieved context.",
-    "unsupported_claims":[]
+    "score":0.82,
+    "covered":[
+        "Aspect 1",
+        "Aspect 2"
+    ],
+    "missing":[
+        "Aspect 3"
+    ],
+    "reason":"The answer covers the major concepts but misses one important point."
 }}
 """
 
@@ -73,6 +71,7 @@ Example:
 
             content = reply["message"]["content"].strip()
 
+            # Remove markdown if LLM returns ```json
             if content.startswith("```"):
                 content = (
                     content.replace("```json", "")
@@ -89,14 +88,19 @@ Example:
 
                 "score": round(score, 2),
 
+                "covered": result.get(
+                    "covered",
+                    []
+                ),
+
+                "missing": result.get(
+                    "missing",
+                    []
+                ),
+
                 "reason": result.get(
                     "reason",
                     "No explanation provided."
-                ),
-
-                "unsupported_claims": result.get(
-                    "unsupported_claims",
-                    []
                 )
 
             }
@@ -107,8 +111,10 @@ Example:
 
                 "score": 0.0,
 
-                "reason": f"Hallucination Judge Error: {str(e)}",
+                "covered": [],
 
-                "unsupported_claims": []
+                "missing": [],
+
+                "reason": f"Completeness Judge Error: {str(e)}"
 
             }

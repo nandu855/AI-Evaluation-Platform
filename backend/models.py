@@ -1,12 +1,20 @@
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import List, Optional
 
+
+# -----------------------------
+# Request Models
+# -----------------------------
 
 class EvaluationRequest(BaseModel):
     question: str
     ai_response: str
     reference_answer: Optional[str] = ""
 
+
+# -----------------------------
+# Judge Result Models
+# -----------------------------
 
 class RelevanceJudgeResult(BaseModel):
     score: float
@@ -25,37 +33,33 @@ class HallucinationJudgeResult(BaseModel):
     unsupported_claims: List[str]
 
 
+class CompletenessJudgeResult(BaseModel):
+    score: float
+    covered: List[str]
+    missing: List[str]
+    reason: str
+
+
 class JudgeResults(BaseModel):
-
     relevance: RelevanceJudgeResult
-
     accuracy: AccuracyJudgeResult
-
     hallucination: HallucinationJudgeResult
+    completeness: CompletenessJudgeResult
 
     overall_score: float
-
     verdict: str
+    summary: str
 
     llm_reasoning: str
 
 
-class EvaluationResponse(BaseModel):
+# -----------------------------
+# API Response
+# -----------------------------
 
+class EvaluationResponse(BaseModel):
     retrieved_context: str
 
     report_file: str
-
-    relevance_score: float
-
-    accuracy_score: float
-
-    hallucination_score: float
-
-    completeness_score: float
-
-    overall_score: float
-
-    verdict: str
 
     judge_results: JudgeResults

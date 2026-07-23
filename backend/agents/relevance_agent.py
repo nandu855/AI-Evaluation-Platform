@@ -1,31 +1,87 @@
-from sentence_transformers import SentenceTransformer
-from sentence_transformers.util import cos_sim
-
-# Load embedding model once
-model = SentenceTransformer("all-MiniLM-L6-v2")
+import json
+from ollama import chat
 
 
 class RelevanceJudge:
+
+    def __init__(self):
+        self.model = "llama3.2"
+
     def evaluate(self, question: str, response: str):
-        """
-        Evaluates how relevant the AI response is to the user's question.
-        """
 
-        question_embedding = model.encode(question, convert_to_tensor=True)
-        response_embedding = model.encode(response, convert_to_tensor=True)
+        prompt = f"""
+You are an AI Evaluation Judge.
 
-        similarity = cos_sim(question_embedding, response_embedding).item()
+Evaluate how relevant the AI response is to the user's question.
 
-        score = round(max(0.0, min(similarity, 1.0)), 2)
+Question:
+{question}
 
-        if score >= 0.85:
-            reason = "The response directly answers the user's question."
-        elif score >= 0.65:
-            reason = "The response is partially relevant to the user's question."
-        else:
-            reason = "The response is not sufficiently relevant to the user's question."
+AI Response:
+{response}
 
-        return {
-            "score": score,
-            "reason": reason
-        }
+Scoring Guidelines:
+
+0.90 - 1.00
+The response directly and completely answers the question.
+
+0.75 - 0.89
+The response answers the question with only minor omissions.
+
+0.50 - 0.74
+The response is partially relevant.
+
+0.00 - 0.49
+The response is mostly irrelevant.
+
+Return ONLY valid JSON.
+
+Example:
+
+{{
+    "score":0.95,
+    "reason":"The response directly answers the user's question and covers all important aspects."
+}}
+"""
+
+        try:
+
+            reply = chat(
+                model=self.model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ]
+            )
+
+            content = reply["message"]["content"].strip()
+
+            if content.startswith("```"):
+                content = (
+                    content.replace("```json", "")
+                    .replace("```", "")
+                    .strip()
+                )
+
+            result = json.loads(content)
+
+            score = float(result.get("score", 0))
+
+            score = max(0.0, min(score, 1.0))
+
+            return {
+                "score": round(score, 2),
+                "reason": result.get(
+                    "reason",
+                    "No reason provided."
+                )
+            }
+
+        except Exception as e:
+
+            return {
+                "score": 0.0,
+                "reason": f"Relevance Judge Error: {str(e)}"
+            }

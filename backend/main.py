@@ -6,15 +6,12 @@ from backend.models import (
 )
 
 from backend.rag import retrieve_context
-
-from backend.scorer import evaluate
-
 from backend.report import generate_report
-
 from backend.agents.judge import Judge
 
 app = FastAPI(
-    title="AI Evaluation Platform"
+    title="AI Evaluation Platform",
+    version="3.0.0"
 )
 
 judge = Judge()
@@ -23,7 +20,8 @@ judge = Judge()
 @app.get("/")
 def home():
     return {
-        "message": "AI Evaluation Platform Running"
+        "message": "AI Evaluation Platform Running",
+        "version": "Milestone 3"
     }
 
 
@@ -33,17 +31,16 @@ def home():
 )
 def evaluate_answer(request: EvaluationRequest):
 
+    # ------------------------------------
+    # Retrieve Context using RAG
+    # ------------------------------------
+
     context = retrieve_context(request.question)
 
-    # Milestone 1 Scores
-    scores = evaluate(
-        request.question,
-        request.ai_response,
-        request.reference_answer,
-        context
-    )
+    # ------------------------------------
+    # Run all Judge Agents
+    # ------------------------------------
 
-    # Milestone 2 Judge Agents
     judge_results = judge.evaluate(
         question=request.question,
         response=request.ai_response,
@@ -51,23 +48,25 @@ def evaluate_answer(request: EvaluationRequest):
         retrieved_context=context
     )
 
+    # ------------------------------------
+    # Generate PDF Report
+    # ------------------------------------
+
     report_file = generate_report(
         filename="evaluation_report.pdf",
         question=request.question,
         ai_answer=request.ai_response,
-        reference_answer=request.reference_answer,
+        reference_answer=request.reference_answer or "",
         retrieved_context=context,
-        scores=scores
+        judge_results=judge_results
     )
 
+    # ------------------------------------
+    # Return API Response
+    # ------------------------------------
+
     return {
-
         "retrieved_context": context,
-
         "report_file": report_file,
-
-        **scores,
-
         "judge_results": judge_results
-
     }
