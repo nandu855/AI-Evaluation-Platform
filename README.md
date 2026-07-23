@@ -1,76 +1,154 @@
 # 🤖 AI Evaluation Platform
 
-An AI-powered evaluation platform that assesses AI-generated responses using **Retrieval-Augmented Generation (RAG)**, **semantic similarity**, **AI Judge Agents**, and **LLM-based reasoning (Llama 3.2 via Ollama)**.
+> A Multi-Agent AI Evaluation Platform that assesses AI-generated responses using **Retrieval-Augmented Generation (RAG)** and specialized **LLM-based Judge Agents** for explainable, reliable, and comprehensive evaluation.
 
-The platform retrieves relevant context from a vector database, evaluates AI responses across multiple quality metrics, detects hallucinations, and generates human-readable reasoning through an LLM.
+![Python](https://img.shields.io/badge/Python-3.10+-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-Backend-green)
+![Streamlit](https://img.shields.io/badge/Streamlit-Frontend-red)
+![Ollama](https://img.shields.io/badge/Ollama-Llama3.2-orange)
+![License](https://img.shields.io/badge/License-Educational-lightgrey)
 
 ---
 
-## 🚀 Features
+# 📖 Overview
 
-- ✅ Retrieval-Augmented Generation (RAG)
-- ✅ ChromaDB Vector Database
-- ✅ Sentence Transformer Embeddings
-- ✅ FastAPI REST API
-- ✅ Streamlit Interactive Dashboard
-- ✅ AI Judge Agents
-  - Relevance Judge
-  - Accuracy Judge
-  - Hallucination Detection Judge
-- ✅ Local LLM Integration using Ollama (Llama 3.2)
-- ✅ Automatic Evaluation Report Generation
-- ✅ JSON Report Download
-- ✅ Validation on Benchmark Question-Answer Pairs
+The **AI Evaluation Platform** is designed to evaluate AI-generated responses using a **multi-agent architecture** powered by **Llama 3.2** and **Retrieval-Augmented Generation (RAG)**.
+
+Unlike traditional evaluation systems that rely solely on similarity metrics, this platform employs specialized AI Judge Agents to assess multiple quality dimensions, generate explainable reasoning, and provide a final evaluation verdict.
+
+The platform includes:
+
+- AI-powered evaluation
+- RAG-based knowledge retrieval
+- Multi-Agent architecture
+- Explainable AI reasoning
+- PDF report generation
+- Batch evaluation of responses
+
+---
+
+# ✨ Features
+
+## 🔍 Retrieval-Augmented Generation (RAG)
+
+- Semantic document retrieval
+- ChromaDB vector database
+- Sentence Transformer embeddings
+- Context-aware evaluation
+
+---
+
+## 🤖 AI Judge Agents
+
+The platform consists of four specialized evaluation agents.
+
+### 🟢 Relevance Judge
+Evaluates whether the AI response directly answers the user's question.
+
+### 🔵 Accuracy Judge
+Determines factual correctness using:
+
+- Reference Answer
+- Retrieved Context
+
+### 🟠 Hallucination Judge
+Detects unsupported or fabricated information that is not grounded in the retrieved context.
+
+### 🟣 Completeness Judge
+Checks whether the response covers all important aspects of the user's question.
+
+---
+
+## ⚖️ Verdict Agent
+
+The Verdict Agent combines the outputs of all Judge Agents using weighted scoring to generate:
+
+- Overall Score
+- Final Verdict
+- Evaluation Summary
+
+Weight Distribution:
+
+| Metric | Weight |
+|---------|---------|
+| Relevance | 25% |
+| Accuracy | 35% |
+| Hallucination | 20% |
+| Completeness | 20% |
+
+---
+
+## 🧠 LLM Summary Agent
+
+Generates a professional explanation including:
+
+- Overall Assessment
+- Strengths
+- Weaknesses
+- Suggestions for Improvement
+
+---
+
+## 📄 Report Generation
+
+The platform automatically generates:
+
+- PDF Evaluation Report
+- JSON Evaluation Report
+
+---
+
+## 📂 Batch Evaluation
+
+Evaluate multiple responses simultaneously using CSV upload.
+
+Generated statistics include:
+
+- Average Overall Score
+- Average Relevance
+- Average Accuracy
+- Average Hallucination
+- Average Completeness
+- PASS Count
+- FAIL Count
 
 ---
 
 # 🏗️ System Architecture
 
 ```
-                User
-                  │
-                  ▼
-          Streamlit Frontend
-                  │
-                  ▼
-            FastAPI Backend
-                  │
-      ┌───────────┴────────────┐
-      ▼                        ▼
- RAG Retrieval            Evaluation Engine
-      │                        │
-      ▼                        ▼
-  ChromaDB               Judge Manager
-                               │
-        ┌──────────────┬──────────────┬──────────────┐
-        ▼              ▼              ▼
- Relevance Judge  Accuracy Judge  Hallucination Judge
-        │              │              │
-        └──────────────┴──────────────┘
-                       │
-                       ▼
-             LLM Judge (Llama 3.2)
-                       │
-                       ▼
-              Final Evaluation Report
+                         User
+                           │
+                           ▼
+                  Streamlit Frontend
+                           │
+                           ▼
+                    FastAPI Backend
+                           │
+                           ▼
+              Retrieval-Augmented Generation
+                           │
+                           ▼
+                    Retrieved Context
+                           │
+                           ▼
+                     Judge Manager
+                           │
+       ┌──────────┬──────────┬──────────┬──────────┐
+       ▼          ▼          ▼          ▼
+ Relevance    Accuracy   Hallucination Completeness
+    Judge        Judge        Judge         Judge
+       └──────────┴──────────┴──────────┴──────────┘
+                           │
+                           ▼
+                     Verdict Agent
+                           │
+                           ▼
+                    LLM Summary Agent
+                           │
+                           ▼
+                PDF Report + JSON Response
 ```
-
----
-
-# 🛠️ Tech Stack
-
-| Category | Technologies |
-|-----------|--------------|
-| Language | Python |
-| Backend | FastAPI |
-| Frontend | Streamlit |
-| Embeddings | Sentence Transformers |
-| Vector Database | ChromaDB |
-| Retrieval | RAG |
-| LLM | Ollama (Llama 3.2) |
-| Dataset | SQuAD, TruthfulQA |
-| Report Generation | ReportLab |
-| API Testing | Swagger UI |
 
 ---
 
@@ -84,35 +162,63 @@ AI-Evaluation-Platform
 │   │   ├── relevance_agent.py
 │   │   ├── accuracy_agent.py
 │   │   ├── hallucination_agent.py
+│   │   ├── completeness_agent.py
+│   │   ├── verdict_agent.py
 │   │   ├── llm_judge.py
-│   │   ├── judge.py
-│   │   └── __init__.py
+│   │   └── judge.py
 │   │
-│   ├── chroma_db
-│   ├── datasets
 │   ├── main.py
 │   ├── models.py
 │   ├── rag.py
 │   ├── report.py
-│   ├── scorer.py
-│   └── __init__.py
+│   └── ...
 │
 ├── frontend
 │   └── app.py
 │
-├── scripts
-│   ├── validate_agents.py
-│   └── __init__.py
-│
+├── knowledge_base
+├── vector_db
 ├── requirements.txt
 └── README.md
 ```
 
 ---
 
-# ⚙️ Installation
+# 🛠️ Technology Stack
 
-Clone the repository
+## Backend
+
+- Python
+- FastAPI
+
+## Frontend
+
+- Streamlit
+
+## AI & Machine Learning
+
+- Ollama
+- Llama 3.2
+- Sentence Transformers
+
+## Vector Database
+
+- ChromaDB
+
+## Report Generation
+
+- ReportLab
+
+## Version Control
+
+- Git
+- GitHub
+
+---
+
+# 🚀 Installation
+
+## Clone Repository
 
 ```bash
 git clone https://github.com/nandu855/AI-Evaluation-Platform.git
@@ -120,21 +226,29 @@ git clone https://github.com/nandu855/AI-Evaluation-Platform.git
 cd AI-Evaluation-Platform
 ```
 
-Create a virtual environment
+---
 
-```bash
-python -m venv venv
-```
-
-Activate virtual environment
+## Create Virtual Environment
 
 Windows
 
 ```bash
+python -m venv venv
+
 venv\Scripts\activate
 ```
 
-Install dependencies
+Linux / macOS
+
+```bash
+python3 -m venv venv
+
+source venv/bin/activate
+```
+
+---
+
+## Install Dependencies
 
 ```bash
 pip install -r requirements.txt
@@ -142,33 +256,31 @@ pip install -r requirements.txt
 
 ---
 
-# 🦙 Install Ollama
+# Install Ollama
 
-Download Ollama
+Download and install Ollama.
 
-https://ollama.com/download
-
-Download Llama 3.2
+Pull the required model:
 
 ```bash
 ollama pull llama3.2
 ```
 
-Verify installation
+Verify installation:
 
 ```bash
-ollama run llama3.2
+ollama list
 ```
 
 ---
 
-# ▶️ Run the Backend
+# Run Backend
 
 ```bash
-uvicorn backend.main:app --reload
+python -m uvicorn backend.main:app --reload
 ```
 
-Backend URL
+Backend
 
 ```
 http://127.0.0.1:8000
@@ -182,126 +294,70 @@ http://127.0.0.1:8000/docs
 
 ---
 
-# ▶️ Run the Frontend
+# Run Frontend
 
 ```bash
 streamlit run frontend/app.py
 ```
 
-Frontend URL
+---
+
+# Batch Evaluation
+
+Prepare a CSV file with the following columns:
+
+```csv
+question,ai_response,reference_answer
+```
+
+Upload the CSV from the **Batch Evaluation** tab to evaluate multiple responses simultaneously.
+
+---
+
+# Example Workflow
 
 ```
-http://localhost:8501
+User Question
+        │
+        ▼
+Retrieve Context (RAG)
+        │
+        ▼
+Run AI Judge Agents
+        │
+        ▼
+Generate Verdict
+        │
+        ▼
+Generate LLM Explanation
+        │
+        ▼
+Generate PDF & JSON Reports
 ```
 
 ---
 
-# 📊 Evaluation Metrics
+# Future Enhancements
 
-The platform evaluates responses using:
-
-- Relevance Score
-- Accuracy Score
-- Hallucination Score
-- Completeness Score
-- Overall Score
-
----
-
-# 🤖 AI Judge Agents
-
-## Relevance Judge
-
-Measures whether the response answers the user's question.
-
----
-
-## Accuracy Judge
-
-Measures factual consistency using:
-
-- Reference Answer
-- Retrieved Context
-
----
-
-## Hallucination Judge
-
-Detects unsupported or fabricated information.
-
----
-
-## LLM Judge
-
-Uses **Llama 3.2 (Ollama)** to provide natural-language reasoning for the evaluation.
-
----
-
-# 📸 Screenshots
-
-## Home Page
-
-![Home](screenshots/home.png)
-
----
-
-## Evaluation Results
-
-![Evaluation](screenshots/evaluation.png)
-
----
-
-## AI Judge Agents
-
-![Judges](screenshots/judges.png)
-
----
-
-## LLM Judge
-
-![LLM](screenshots/llm_reasoning.png)
-
----
-
-## Swagger API
-
-![Swagger](screenshots/swagger.png)
-
----
-
-# 🔬 Benchmark Validation
-
-The AI Judge Agents were validated using multiple benchmark question-answer pairs to verify:
-
-- Consistent scoring
-- Reasoning quality
-- Hallucination detection
-- Accuracy assessment
-
----
-
-# 🚀 Future Enhancements
-
-- LLM-generated reasoning for each judge agent
-- Natural Language Inference (NLI) based hallucination detection
-- Automated benchmark evaluation reports
-- Additional benchmark datasets
-- Docker support
-- CI/CD pipeline
+- Multi-LLM evaluation
+- Human feedback integration
+- Docker deployment
 - Cloud deployment
+- Authentication & user management
+- Evaluation history dashboard
+- REST API authentication
+- Advanced analytics
 
 ---
 
-# 👨‍💻 Author
+# Author
 
-**Anand kumar badarala**
+**ANAND KUMAR BADARALA**
 
-GitHub:
-
-https://github.com/nandu855
+GitHub: https://github.com/nandu855
 
 ---
 
-# ⭐ If you found this project useful
+# License
 
-Please consider giving it a ⭐ on GitHub.
+This project is developed for educational and research purposes.
