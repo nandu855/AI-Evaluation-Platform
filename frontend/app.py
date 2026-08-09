@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import pandas as pd
+from frontend.dashboard import show_dashboard
 
 API_URL = "http://127.0.0.1:8000"
 
@@ -484,7 +485,6 @@ Upload a CSV containing the following columns:
     )
 
     if uploaded_file is not None:
-
         try:
 
             df = pd.read_csv(uploaded_file)
@@ -574,18 +574,25 @@ Upload a CSV containing the following columns:
 
                     progress.progress((index + 1) / total)
 
-                result_df = pd.DataFrame(results)
 
-                st.success("Batch Evaluation Completed")
 
-                st.dataframe(
-                    result_df,
-                    use_container_width=True
-                )
+                    result_df = pd.DataFrame(results)
 
-                st.subheader("Statistics")
+                st.success("Batch Evaluation Completed Successfully!")
 
-                c1, c2, c3 = st.columns(3)
+                # ==========================================
+                # Dashboard
+                # ==========================================
+
+                show_dashboard(result_df)
+
+                # ==========================================
+                # Statistics
+                # ==========================================
+
+                st.subheader("Batch Statistics")
+
+                c1, c2, c3, c4 = st.columns(4)
 
                 with c1:
                     st.metric(
@@ -601,20 +608,96 @@ Upload a CSV containing the following columns:
 
                 with c3:
                     st.metric(
+                        "Needs Improvement",
+                        int(
+                            (
+                                result_df["Verdict"]
+                                == "Needs Improvement"
+                            ).sum()
+                        )
+                    )
+
+                with c4:
+                    st.metric(
                         "FAIL",
                         int((result_df["Verdict"] == "FAIL").sum())
                     )
 
-                csv = result_df.to_csv(index=False).encode("utf-8")
+                st.divider()
+
+                # ==========================================
+                # Result Table
+                # ==========================================
+
+                st.subheader("Evaluation Results")
+
+                st.dataframe(
+                    result_df,
+                    use_container_width=True,
+                    hide_index=True
+                )
+
+                st.divider()
+
+                # ==========================================
+                # Download CSV
+                # ==========================================
+
+                csv = result_df.to_csv(
+                    index=False
+                ).encode("utf-8")
 
                 st.download_button(
-                    "⬇ Download Batch Results",
-                    csv,
-                    "batch_results.csv",
-                    "text/csv",
+                    "⬇ Download Batch Results (CSV)",
+                    data=csv,
+                    file_name="batch_results.csv",
+                    mime="text/csv",
                     use_container_width=True
                 )
 
-        except Exception as e:
+                # ==========================================
+                # Generate PDF Report
+                # ==========================================
 
-            st.error(str(e))
+                try:
+
+                    pdf_response = requests.post(
+                        f"{API_URL}/generate-batch-report",
+                        json=results,
+                        timeout=300
+                    )
+
+                    if pdf_response.status_code == 200:
+
+                        pdf_result = pdf_response.json()
+
+                        with open(
+                            pdf_result["report_file"],
+                            "rb"
+                        ) as pdf:
+
+                            st.download_button(
+
+                                "📄 Download Batch PDF Report",
+
+                                data=pdf,
+
+                                file_name="batch_evaluation_report.pdf",
+
+                                mime="application/pdf",
+
+                                use_container_width=True
+
+                            )
+
+                    else:
+
+                        st.warning(
+                            "Batch PDF Report could not be generated."
+                        )
+
+                except Exception as e:
+
+                    st.warning(
+                        f"PDF Generation Failed: {e}"
+                    )
