@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 import pandas as pd
-from frontend.dashboard import show_dashboard
+from dashboard import show_dashboard
 
 API_URL = "http://127.0.0.1:8000"
 
@@ -471,12 +471,12 @@ with tab2:
 
     st.markdown(
         """
-Upload a CSV containing the following columns:
+        Upload a CSV containing the following columns:
 
-- question
-- ai_response
-- reference_answer
-"""
+        - question
+        - ai_response
+        - reference_answer
+        """
     )
 
     uploaded_file = st.file_uploader(
@@ -485,6 +485,7 @@ Upload a CSV containing the following columns:
     )
 
     if uploaded_file is not None:
+
         try:
 
             df = pd.read_csv(uploaded_file)
@@ -503,14 +504,16 @@ Upload a CSV containing the following columns:
             ]
 
             missing_columns = [
-                col for col in required_columns
+                col
+                for col in required_columns
                 if col not in df.columns
             ]
 
             if missing_columns:
 
                 st.error(
-                    f"Missing required columns: {', '.join(missing_columns)}"
+                    f"Missing required columns: "
+                    f"{', '.join(missing_columns)}"
                 )
 
             elif st.button(
@@ -527,9 +530,11 @@ Upload a CSV containing the following columns:
                 for index, row in df.iterrows():
 
                     payload = {
-                        "question": row["question"],
-                        "ai_response": row["ai_response"],
-                        "reference_answer": row["reference_answer"]
+                        "question": str(row["question"]),
+                        "ai_response": str(row["ai_response"]),
+                        "reference_answer": str(
+                            row["reference_answer"]
+                        )
                     }
 
                     try:
@@ -558,7 +563,7 @@ Upload a CSV containing the following columns:
                             }
                         )
 
-                    except Exception:
+                    except Exception as e:
 
                         results.append(
                             {
@@ -572,41 +577,59 @@ Upload a CSV containing the following columns:
                             }
                         )
 
-                    progress.progress((index + 1) / total)
-
-
-
-                    result_df = pd.DataFrame(results)
-
-                st.success("Batch Evaluation Completed Successfully!")
+                    progress.progress(
+                        (index + 1) / total
+                    )
 
                 # ==========================================
-                # Dashboard
+                # Create DataFrame
                 # ==========================================
 
-                show_dashboard(result_df)
+                result_df = pd.DataFrame(results)
+
+                st.success(
+                    "Batch Evaluation Completed Successfully!"
+                )
+
+                # ==========================================
+                # Evaluation Dashboard
+                # ==========================================
+
+                show_dashboard(
+                    result_df
+                )
 
                 # ==========================================
                 # Statistics
                 # ==========================================
 
-                st.subheader("Batch Statistics")
+                st.subheader(
+                    "Batch Statistics"
+                )
 
                 c1, c2, c3, c4 = st.columns(4)
 
                 with c1:
+
                     st.metric(
                         "Average Overall",
                         f"{result_df['Overall'].mean():.2f}"
                     )
 
                 with c2:
+
                     st.metric(
                         "PASS",
-                        int((result_df["Verdict"] == "PASS").sum())
+                        int(
+                            (
+                                result_df["Verdict"]
+                                == "PASS"
+                            ).sum()
+                        )
                     )
 
                 with c3:
+
                     st.metric(
                         "Needs Improvement",
                         int(
@@ -618,18 +641,26 @@ Upload a CSV containing the following columns:
                     )
 
                 with c4:
+
                     st.metric(
                         "FAIL",
-                        int((result_df["Verdict"] == "FAIL").sum())
+                        int(
+                            (
+                                result_df["Verdict"]
+                                == "FAIL"
+                            ).sum()
+                        )
                     )
+
+                # ==========================================
+                # Results Table
+                # ==========================================
 
                 st.divider()
 
-                # ==========================================
-                # Result Table
-                # ==========================================
-
-                st.subheader("Evaluation Results")
+                st.subheader(
+                    "Individual Evaluation Results"
+                )
 
                 st.dataframe(
                     result_df,
@@ -637,27 +668,35 @@ Upload a CSV containing the following columns:
                     hide_index=True
                 )
 
+                # ==========================================
+                # CSV Download
+                # ==========================================
+
                 st.divider()
 
-                # ==========================================
-                # Download CSV
-                # ==========================================
-
-                csv = result_df.to_csv(
-                    index=False
-                ).encode("utf-8")
+                csv_data = (
+                    result_df
+                    .to_csv(index=False)
+                    .encode("utf-8")
+                )
 
                 st.download_button(
                     "⬇ Download Batch Results (CSV)",
-                    data=csv,
+                    data=csv_data,
                     file_name="batch_results.csv",
                     mime="text/csv",
                     use_container_width=True
                 )
 
                 # ==========================================
-                # Generate PDF Report
+                # Batch PDF Report
                 # ==========================================
+
+                st.divider()
+
+                st.subheader(
+                    "📄 Batch Evaluation Report"
+                )
 
                 try:
 
@@ -667,37 +706,72 @@ Upload a CSV containing the following columns:
                         timeout=300
                     )
 
-                    if pdf_response.status_code == 200:
+                    pdf_response.raise_for_status()
 
-                        pdf_result = pdf_response.json()
+                    pdf_result = pdf_response.json()
 
-                        with open(
-                            pdf_result["report_file"],
-                            "rb"
-                        ) as pdf:
+                    if pdf_result.get("status") == "error":
 
-                            st.download_button(
-
-                                "📄 Download Batch PDF Report",
-
-                                data=pdf,
-
-                                file_name="batch_evaluation_report.pdf",
-
-                                mime="application/pdf",
-
-                                use_container_width=True
-
+                        st.error(
+                            "PDF generation failed: "
+                            + pdf_result.get(
+                                "message",
+                                "Unknown error"
                             )
+                        )
 
                     else:
 
-                        st.warning(
-                            "Batch PDF Report could not be generated."
+                        report_file = (
+                            pdf_result["report_file"]
                         )
+
+                        try:
+
+                            with open(
+                                report_file,
+                                "rb"
+                            ) as pdf_file:
+
+                                pdf_data = pdf_file.read()
+
+                            st.download_button(
+                                "📄 Download Batch PDF Report",
+                                data=pdf_data,
+                                file_name=(
+                                    "batch_evaluation_report.pdf"
+                                ),
+                                mime="application/pdf",
+                                use_container_width=True
+                            )
+
+                            st.success(
+                                "Batch PDF report generated successfully."
+                            )
+
+                        except FileNotFoundError:
+
+                            st.error(
+                                f"PDF was generated by the backend, "
+                                f"but the frontend could not find "
+                                f"the file: {report_file}"
+                            )
+
+                except requests.exceptions.RequestException as e:
+
+                    st.error(
+                        f"Could not connect to the batch "
+                        f"report endpoint: {e}"
+                    )
 
                 except Exception as e:
 
-                    st.warning(
-                        f"PDF Generation Failed: {e}"
+                    st.error(
+                        f"Batch PDF generation failed: {e}"
                     )
+
+        except Exception as e:
+
+            st.error(
+                f"CSV processing error: {e}"
+            )
