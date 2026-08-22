@@ -1,9 +1,20 @@
+import os
+
 import streamlit as st
 import requests
 import pandas as pd
+
 from dashboard import show_dashboard
 
-API_URL = "http://127.0.0.1:8000"
+
+# ==========================================================
+# BACKEND API URL
+# ==========================================================
+
+API_URL = os.getenv(
+    "API_URL",
+    "http://127.0.0.1:8000"
+).rstrip("/")
 
 st.set_page_config(
     page_title="AI Evaluation Platform",

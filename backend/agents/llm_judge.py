@@ -1,10 +1,37 @@
+import os
+
 from ollama import chat
 
 
 class LLMJudge:
 
     def __init__(self):
-        self.model = "llama3.2"
+        self.provider = os.getenv(
+            "LLM_PROVIDER",
+            "ollama"
+        )
+
+        self.model = os.getenv(
+            "LLM_MODEL",
+            "llama3.2"
+        )
+
+        self.openai_client = None
+
+        if self.provider == "openai":
+            from openai import OpenAI
+
+            api_key = os.getenv("OPENAI_API_KEY")
+
+            if not api_key:
+                raise ValueError(
+                    "OPENAI_API_KEY is required when "
+                    "LLM_PROVIDER=openai"
+                )
+
+            self.openai_client = OpenAI(
+                api_key=api_key
+            )
 
     def explain(
         self,
@@ -121,14 +148,47 @@ Keep the response concise and readable.
 Return ONLY plain text.
 """
 
-        reply = chat(
-            model=self.model,
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
-        )
+        # --------------------------------------------------
+        # LOCAL LLM - OLLAMA
+        # --------------------------------------------------
 
-        return reply["message"]["content"]
+        if self.provider == "ollama":
+
+            reply = chat(
+                model=self.model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ]
+            )
+
+            return reply["message"]["content"]
+
+        # --------------------------------------------------
+        # CLOUD LLM - OPENAI
+        # --------------------------------------------------
+
+        if self.provider == "openai":
+
+            reply = self.openai_client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                temperature=0.2
+            )
+
+            return reply.choices[0].message.content
+
+        # --------------------------------------------------
+        # INVALID PROVIDER
+        # --------------------------------------------------
+
+        raise ValueError(
+            f"Unsupported LLM_PROVIDER: {self.provider}"
+        )
